@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Boa Vida Portfolio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{--bg:#050505;--line:#262626;--gold:#e8b923;--txt:#f5f5f5;--muted:#a3a3a3;--red:#ff2d3a;--green:#22c55e;--surf:#141414;--surf2:#1c1c1c;--gb:#e8b92347;--blue:#38bdf8;--mine:#f472b6}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 500px at 50% -200px,#e8b9231a,transparent),var(--bg);color:var(--txt);font:14px Inter,system-ui,sans-serif}
+h1,h2{font-family:Oswald,sans-serif;margin:0;color:var(--gold);text-transform:uppercase}
+h1{letter-spacing:.08em;font-size:28px}
+h2{font-size:18px;margin:26px 0 10px;letter-spacing:.1em;font-weight:600;border-left:3px solid var(--gold);padding-left:10px}
+.wrap{max-width:1280px;margin:0 auto;padding:0 20px}
+.top{background:linear-gradient(180deg,#0c0c0c,#050505);border-bottom:1px solid var(--gb);box-shadow:0 12px 40px #0000008c;position:relative;padding:16px 0 14px}
+.top::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,#e8b923,transparent)}
+.muted{color:var(--muted);font-size:12px}
+.pos{color:var(--green)!important}.neg{color:var(--red)!important}
+#gate{position:fixed;inset:0;background:var(--bg);display:grid;place-items:center;z-index:99}
+#gate form{background:linear-gradient(180deg,#1c1c1c,#141414);border:1px solid var(--gb);border-radius:1rem;padding:28px;text-align:center}
+#gate input{font:18px Inter;padding:8px 12px;border:1px solid var(--gb);border-radius:8px;width:180px;text-align:center;background:#0c0c0c;color:var(--txt)}
+#gate button{margin-left:6px;font:700 15px Inter;padding:9px 16px;border:0;border-radius:999px;background:var(--gold);color:#050505;cursor:pointer}
+#app{display:none}
+.searchwrap{position:relative;margin:14px 0 10px}
+.searchwrap input{width:100%;font:600 16px Inter;padding:14px 18px 14px 44px;border-radius:14px;border:1px solid var(--gb);background:#0c0c0c;color:var(--txt);outline:none}
+.searchwrap input:focus{border-color:var(--gold);box-shadow:0 0 0 3px #e8b92333}
+.searchwrap .ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--gold);font-size:18px;pointer-events:none}
+#suggest{position:absolute;left:0;right:0;top:calc(100% + 6px);background:#121212;border:1px solid var(--gb);border-radius:12px;max-height:320px;overflow:auto;z-index:20;display:none;box-shadow:0 16px 40px #000a}
+#suggest div{padding:10px 14px;cursor:pointer;border-bottom:1px solid #1c1c1c}
+#suggest div:hover,#suggest div.on{background:#e8b92322}
+#suggest b{color:var(--gold);font-weight:600}
+#suggest span{color:var(--muted);font-size:12px;margin-left:8px}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px;align-items:center}
+.pill{background:var(--surf2);color:#d4d4d4;border:1px solid var(--line);border-radius:999px;padding:7px 14px;font:600 13px Inter;cursor:pointer;transition:.15s}
+.pill:hover{border-color:var(--gold);box-shadow:0 0 18px #e8b92355}
+.pill.on{background:linear-gradient(180deg,#f5c518,#e8b923);color:#050505;border-color:#e8b923;box-shadow:0 0 18px #e8b923d9}
+.pill.mine.on{background:linear-gradient(180deg,#f9a8d4,#f472b6);color:#050505;border-color:#f472b6;box-shadow:0 0 18px #f472b6aa}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:8px 0 14px}
+.card{background:linear-gradient(180deg,#1c1c1c,#141414);border:1px solid var(--gb);border-radius:1rem;padding:14px;transition:transform .2s,box-shadow .2s}
+.card:hover{transform:translateY(-3px);box-shadow:0 14px 36px #00000073,0 0 0 1px #e8b923}
+.card .l{font:700 11px Inter;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.card .v{font:700 24px Oswald;margin-top:4px}
+.card .s{font-size:12px;color:var(--muted);margin-top:4px}
+.layout{display:grid;grid-template-columns:1.4fr .9fr;gap:14px}
+@media(max-width:960px){.layout{grid-template-columns:1fr}}
+#map{height:520px;border-radius:1rem;border:1px solid var(--gb);box-shadow:0 12px 40px #0008;z-index:1}
+.chartbox{background:linear-gradient(180deg,#1c1c1c,#141414);border:1px solid var(--gb);border-radius:1rem;padding:12px;height:520px;display:flex;flex-direction:column}
+.chartbox canvas{flex:1;min-height:0;cursor:pointer}
+.legend{display:flex;flex-wrap:wrap;gap:10px 16px;margin:8px 0 4px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.scroll{overflow-x:auto;border-radius:1rem;border:1px solid var(--gb)}
+table{width:100%;border-collapse:collapse;background:var(--surf);color:var(--txt)}
+th,td{padding:8px 10px;text-align:right;white-space:nowrap;border-bottom:1px solid #202020}
+th:first-child,td:first-child,th.t,td.t{text-align:left}
+th{background:#0c0c0c;color:var(--gold);text-transform:uppercase;font:600 11px Inter;letter-spacing:.1em;cursor:pointer;user-select:none;position:sticky;top:0}
+tr:nth-child(even) td{background:#0c0c0c66}
+tr:hover td{background:#e8b92314}
+tr.mine td{background:#f472b614}
+tr.hilite td{background:#e8b92333!important;outline:1px solid var(--gold)}
+a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font:600 11px Inter}
+.badge.owned{background:#22c55e22;color:var(--green)}
+.badge.sold{background:#ff2d3a22;color:var(--red)}
+.badge.mine{background:#f472b622;color:var(--mine)}
+.leaflet-container{background:#0b0b0b;font:13px Inter,system-ui}
+.leaflet-popup-content-wrapper{background:#141414;color:#f5f5f5;border:1px solid #e8b92355;border-radius:12px;box-shadow:0 12px 30px #000a}
+.leaflet-popup-tip{background:#141414;border:1px solid #e8b92355}
+.leaflet-popup-content{margin:12px 14px;line-height:1.4}
+.leaflet-popup-content strong{color:var(--gold);font-size:15px}
+.dot-mine{box-shadow:0 0 0 3px #f472b6,0 0 14px #f472b6aa!important}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin:4px 0 8px}
+.qmeta{color:var(--muted);font-size:12px}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.fx-in{animation:up .55s cubic-bezier(.2,.8,.2,1) both}
+@media(prefers-reduced-motion:reduce){.fx-in{animation:none}}
+</style>
+</head>
+<body>
+<div id="gate"><form onsubmit="go(event)"><h1>Boa Vida Portfolio</h1><p class="muted">Enter password</p><input id="pw" type="password" autofocus autocomplete="current-password"><button>Open</button><div id="err" class="neg"></div></form></div>
+<div id="app">
+  <div class="top"><div class="wrap">
+    <h1>Boa Vida Portfolio</h1>
+    <div class="muted">All BVG parks · map · year filter · your positions · <span id="gen"></span></div>
+    <div class="searchwrap">
+      <span class="ico">⌕</span>
+      <input id="q" type="search" placeholder="Search parks by name, city, state, or slug…" autocomplete="off" spellcheck="false">
+      <div id="suggest"></div>
+    </div>
+  </div></div>
+  <div class="wrap fx-in">
+    <div class="toolbar">
+      <div class="pills" id="years"></div>
+      <div class="pills">
+        <button class="pill mine" id="mineBtn" type="button">My deals</button>
+        <button class="pill" id="clearBtn" type="button">Clear</button>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i style="background:#38bdf8"></i>Owned</span>
+      <span><i style="background:#ff2d3a"></i>Sold</span>
+      <span><i style="background:#f472b6;box-shadow:0 0 0 2px #f472b6"></i>My position</span>
+      <span>Dot size ∝ spaces</span>
+    </div>
+    <div class="cards" id="cards"></div>
+    <div class="layout">
+      <div id="map"></div>
+      <div class="chartbox">
+        <div style="font:600 12px Inter;color:var(--gold);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">Acquisitions by year · click a bar to filter</div>
+        <canvas id="ychart"></canvas>
+        <div class="qmeta" id="chartHint">Bars show park count (gold) and acquisition $ (blue outline scale).</div>
+      </div>
+    </div>
+    <h2>Parks <span class="qmeta" id="tblCount"></span></h2>
+    <div class="scroll"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+    <p class="muted" style="margin:18px 0 40px">Password-gated because it marks your B-share and Carrie Lynn positions. Street addresses are not on the BVG site. Alpine Village / Westshore share one $2.85M price (counted once in totals). Completeness note: public sitemap also lists <code>apple-blossom-peach-blossom-mobile-home-parks</code>, which was not in the all-properties scrape — not plotted.</p>
+  </div>
+</div>
+<script>
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function decrypt(pw){
+  const e=await (await fetch('data.enc.json',{cache:'no-store'})).json();
+  const km=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(e.salt),iterations:e.iter,hash:'SHA-256'},km,{name:'AES-GCM',length:256},false,['decrypt']);
+  return JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(e.iv)},key,b64(e.ct))));
+}
+const $=n=>n==null||n===''?'—':'$'+Math.round(n).toLocaleString('en-US');
+const $2=n=>n==null||n===''?'—':'$'+Number(n).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+const pct=n=>n==null?'—':(n*100).toFixed(1)+'%';
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let DATA=null, map=null, layer=null, markers={}, yearFilter='All', mineOnly=false, query='', sort={k:'acquired',dir:-1}, selectedId=null;
+
+async function go(ev){ev.preventDefault();
+  try{
+    DATA=await decrypt(document.getElementById('pw').value);
+    sessionStorage.bvapw=document.getElementById('pw').value;
+    document.getElementById('gate').style.display='none';
+    document.getElementById('app').style.display='block';
+    document.getElementById('gen').textContent=DATA.generated||'';
+    boot();
+  }catch(e){document.getElementById('err').textContent='Wrong password';}
+}
+
+function boot(){
+  buildYearPills();
+  initMap();
+  drawChart();
+  render();
+  const q=document.getElementById('q');
+  q.addEventListener('input',()=>{query=q.value.trim();renderSuggest();render();});
+  q.addEventListener('keydown',e=>{
+    const box=document.getElementById('suggest');
+    const items=[...box.querySelectorAll('div')];
+    const on=box.querySelector('div.on');
+    let i=items.indexOf(on);
+    if(e.key==='ArrowDown'){e.preventDefault();i=Math.min(items.length-1,i+1);items.forEach(x=>x.classList.remove('on'));if(items[i])items[i].classList.add('on');}
+    else if(e.key==='ArrowUp'){e.preventDefault();i=Math.max(0,i-1);items.forEach(x=>x.classList.remove('on'));if(items[i])items[i].classList.add('on');}
+    else if(e.key==='Enter'){const t=box.querySelector('div.on')||items[0];if(t){e.preventDefault();pickPark(+t.dataset.id);}}
+    else if(e.key==='Escape'){q.value='';query='';box.style.display='none';render();}
+  });
+  document.getElementById('mineBtn').onclick=()=>{mineOnly=!mineOnly;document.getElementById('mineBtn').classList.toggle('on',mineOnly);render();};
+  document.getElementById('clearBtn').onclick=()=>{
+    yearFilter='All';mineOnly=false;query='';selectedId=null;
+    document.getElementById('q').value='';
+    document.getElementById('mineBtn').classList.remove('on');
+    document.getElementById('suggest').style.display='none';
+    buildYearPills();render();drawChart();
+  };
+  document.addEventListener('click',e=>{if(!e.target.closest('.searchwrap'))document.getElementById('suggest').style.display='none';});
+}
+
+function buildYearPills(){
+  const years=[...new Set(DATA.parks.map(p=>p.year).filter(Boolean))].sort((a,b)=>b-a);
+  const el=document.getElementById('years');
+  el.innerHTML=['All',...years].map(y=>`<button type="button" class="pill${yearFilter==y?' on':''}" data-y="${y}">${y}</button>`).join('');
+  el.onclick=e=>{const b=e.target.closest('.pill');if(!b)return;yearFilter=b.dataset.y==='All'?'All':+b.dataset.y;buildYearPills();render();drawChart();};
+}
+
+function matchesQuery(p,q){
+  if(!q) return true;
+  const s=q.toLowerCase();
+  return [p.name,p.city,p.state,p.slug,p.mine,p.status].join(' ').toLowerCase().includes(s);
+}
+function filtered(){
+  return DATA.parks.filter(p=>{
+    if(yearFilter!=='All' && p.year!==yearFilter) return false;
+    if(mineOnly && !p.mine) return false;
+    if(!matchesQuery(p,query)) return false;
+    return true;
+  });
+}
+
+function kpiPrice(list){
+  // count alpine/westshore once
+  let total=0, seenShared=false;
+  for(const p of list){
+    if(!p.price) continue;
+    if(p.shared_price){ if(seenShared) continue; seenShared=true; }
+    total+=p.price;
+  }
+  return total;
+}
+
+function renderCards(list){
+  const owned=list.filter(p=>p.status==='Owned');
+  const sold=list.filter(p=>p.status==='Sold');
+  const spaces=list.reduce((a,p)=>a+(p.spaces||0),0);
+  const acq=kpiPrice(list);
+  const gain=sold.reduce((a,p)=>a+(p.gain||0),0);
+  const mine=list.filter(p=>p.mine).length;
+  document.getElementById('cards').innerHTML=`
+    <div class="card"><div class="l">Parks</div><div class="v">${list.length}</div><div class="s">${owned.length} owned · ${sold.length} sold</div></div>
+    <div class="card"><div class="l">Acquisition $</div><div class="v">${$2(acq)}</div><div class="s">shared Alpine/Westshore once</div></div>
+    <div class="card"><div class="l">Spaces</div><div class="v">${spaces.toLocaleString()}</div><div class="s">avg ${spaces?$2(acq/spaces):'—'}/space</div></div>
+    <div class="card"><div class="l">Sold gains</div><div class="v ${gain>=0?'pos':'neg'}">${$2(gain)}</div><div class="s">${sold.length} exits</div></div>
+    <div class="card"><div class="l">My positions</div><div class="v" style="color:var(--mine)">${mine}</div><div class="s">in current filter</div></div>`;
+}
+
+function initMap(){
+  map=L.map('map',{zoomControl:true, attributionControl:true}).setView([39.5,-98.35],4);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    attribution:'&copy; OpenStreetMap &copy; CARTO', maxZoom:19, subdomains:'abcd'
+  }).addTo(map);
+  layer=L.layerGroup().addTo(map);
+}
+
+function radiusFor(spaces){
+  const s=spaces||20;
+  return Math.max(5, Math.min(18, 4+Math.sqrt(s)*0.55));
+}
+
+function popupHtml(p){
+  const sold=p.status==='Sold';
+  return `<strong>${esc(p.name)}</strong><br>
+    <span class="badge ${sold?'sold':'owned'}">${esc(p.status)}</span>
+    ${p.mine?` <span class="badge mine">My deal</span>`:''}<br>
+    Acquired: ${esc(p.acquired||'—')}<br>
+    Price: ${$2(p.price)} · Spaces: ${(p.spaces||0).toLocaleString()} · ${$2(p.pps)}/space<br>
+    ${esc(p.city||'(city unknown)')}, ${esc(p.state)}
+    ${sold?`<br>Sold ${esc(p.date_sold||'')} for ${$2(p.sale_price)} · Gain ${$2(p.gain)} (${pct(p.gain_pct)})`:''}
+    ${p.geo_flag?`<br><span style="color:#fbbf24">${esc(p.geo_flag)}</span>`:''}
+    <br><a href="${esc(p.url)}" target="_blank" rel="noopener">Detail page ↗</a>`;
+}
+
+function renderMap(list){
+  layer.clearLayers(); markers={};
+  const bounds=[];
+  for(const p of list){
+    if(p.lat==null||p.lon==null) continue;
+    const color=p.mine?'#f472b6':(p.status==='Sold'?'#ff2d3a':'#38bdf8');
+    const m=L.circleMarker([p.lat,p.lon],{
+      radius:radiusFor(p.spaces),
+      color:p.mine?'#f472b6':'#0a0a0a',
+      weight:p.mine?3:1,
+      fillColor:color,
+      fillOpacity:0.88,
+      className:p.mine?'dot-mine':''
+    });
+    m.bindPopup(popupHtml(p),{maxWidth:320});
+    m.on('click',()=>{selectedId=p.id;hiliteTable(p.id);});
+    m.addTo(layer);
+    markers[p.id]=m;
+    bounds.push([p.lat,p.lon]);
+  }
+  if(bounds.length && !query && yearFilter==='All' && !mineOnly && selectedId==null){
+    map.fitBounds(bounds,{padding:[30,30],maxZoom:6});
+  } else if(bounds.length && (yearFilter!=='All'||mineOnly||query) && selectedId==null){
+    map.fitBounds(bounds,{padding:[40,40],maxZoom:8});
+  }
+}
+
+function renderTable(list){
+  const cols=[
+    {k:'name',t:'Name',cls:'t'},
+    {k:'year',t:'Year'},
+    {k:'price',t:'Price'},
+    {k:'spaces',t:'Spaces'},
+    {k:'pps',t:'$/space'},
+    {k:'city',t:'City',cls:'t'},
+    {k:'state',t:'State'},
+    {k:'status',t:'Status'},
+  ];
+  const th=cols.map(c=>`<th class="${c.cls||''}" data-k="${c.k}">${c.t}${sort.k===c.k?(sort.dir>0?' ▲':' ▼'):''}</th>`).join('')+`<th class="t">Link</th>`;
+  const rows=[...list].sort((a,b)=>{
+    const av=a[sort.k], bv=b[sort.k];
+    if(av==null&&bv==null) return 0;
+    if(av==null) return 1; if(bv==null) return -1;
+    if(typeof av==='string') return av.localeCompare(bv)*sort.dir;
+    return (av-bv)*sort.dir;
+  });
+  const tb=rows.map(p=>`<tr class="${p.mine?'mine':''}${selectedId===p.id?' hilite':''}" data-id="${p.id}">
+    <td class="t">${esc(p.name)}${p.mine?` <span class="badge mine">mine</span>`:''}</td>
+    <td>${p.year??'—'}</td>
+    <td>${$2(p.price)}</td>
+    <td>${(p.spaces||0).toLocaleString()}</td>
+    <td>${$2(p.pps)}</td>
+    <td class="t">${esc(p.city||'—')}</td>
+    <td>${esc(p.state)}</td>
+    <td><span class="badge ${p.status==='Sold'?'sold':'owned'}">${esc(p.status)}</span></td>
+    <td class="t"><a href="${esc(p.url)}" target="_blank" rel="noopener">open</a></td>
+  </tr>`).join('');
+  const tbl=document.getElementById('tbl');
+  tbl.querySelector('thead').innerHTML='<tr>'+th+'</tr>';
+  tbl.querySelector('tbody').innerHTML=tb;
+  tbl.querySelector('thead').onclick=e=>{
+    const th=e.target.closest('th[data-k]'); if(!th) return;
+    const k=th.dataset.k;
+    if(sort.k===k) sort.dir*=-1; else {sort.k=k; sort.dir=(k==='name'||k==='city'||k==='state'||k==='status')?1:-1;}
+    renderTable(list);
+  };
+  tbl.querySelector('tbody').onclick=e=>{
+    const tr=e.target.closest('tr[data-id]'); if(!tr) return;
+    if(e.target.closest('a')) return;
+    pickPark(+tr.dataset.id, false);
+  };
+  document.getElementById('tblCount').textContent=`· ${list.length} shown`;
+}
+
+function hiliteTable(id){
+  document.querySelectorAll('#tbl tbody tr').forEach(tr=>tr.classList.toggle('hilite', +tr.dataset.id===id));
+}
+
+function pickPark(id, clearQuery=true){
+  const p=DATA.parks.find(x=>x.id===id); if(!p) return;
+  selectedId=id;
+  if(clearQuery){ /* keep query so filter stays, but fly */ }
+  document.getElementById('suggest').style.display='none';
+  // Ensure park visible: if filtered out, broaden
+  if(!filtered().some(x=>x.id===id)){
+    yearFilter='All'; mineOnly=false;
+    buildYearPills();
+    document.getElementById('mineBtn').classList.remove('on');
+  }
+  render();
+  if(p.lat!=null){
+    map.setView([p.lat,p.lon], Math.max(map.getZoom(), 9), {animate:true});
+    const m=markers[id]; if(m) m.openPopup();
+  }
+  const tr=document.querySelector(`#tbl tbody tr[data-id="${id}"]`);
+  if(tr) tr.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+
+function renderSuggest(){
+  const box=document.getElementById('suggest');
+  if(!query){box.style.display='none';return;}
+  const hits=DATA.parks.filter(p=>matchesQuery(p,query)).slice(0,12);
+  if(!hits.length){box.innerHTML='<div class="muted" style="padding:12px">No matches</div>';box.style.display='block';return;}
+  box.innerHTML=hits.map((p,i)=>`<div data-id="${p.id}" class="${i===0?'on':''}"><b>${esc(p.name)}</b><span>${esc(p.city||'?')}, ${esc(p.state)} · ${p.year||'—'} · ${$2(p.price)}</span></div>`).join('');
+  box.style.display='block';
+  box.onclick=e=>{const d=e.target.closest('div[data-id]'); if(d) pickPark(+d.dataset.id);};
+}
+
+function drawChart(){
+  // chart uses year filter only for highlight; always show all years from full data (or query/mine constrained base)
+  const base=DATA.parks.filter(p=>{
+    if(mineOnly && !p.mine) return false;
+    if(!matchesQuery(p,query)) return false;
+    return true;
+  });
+  const by={};
+  for(const p of base){
+    if(!p.year) continue;
+    if(!by[p.year]) by[p.year]={n:0,dollars:0,seenShared:false};
+    by[p.year].n++;
+    if(p.price){
+      if(p.shared_price){ if(by[p.year].seenShared) {} else { by[p.year].dollars+=p.price; by[p.year].seenShared=true; } }
+      else by[p.year].dollars+=p.price;
+    }
+  }
+  const years=Object.keys(by).map(Number).sort((a,b)=>a-b);
+  const canvas=document.getElementById('ychart');
+  const ctx=canvas.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.clientWidth||400, H=canvas.clientHeight||400;
+  canvas.width=W*dpr; canvas.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  if(!years.length){ctx.fillStyle='#a3a3a3';ctx.fillText('No data',20,40);return;}
+  const pad={t:20,r:16,b:36,l:40};
+  const maxN=Math.max(...years.map(y=>by[y].n));
+  const maxD=Math.max(...years.map(y=>by[y].dollars));
+  const bw=(W-pad.l-pad.r)/years.length;
+  const hit=[];
+  years.forEach((y,i)=>{
+    const x=pad.l+i*bw+bw*0.15;
+    const w=bw*0.7;
+    const h=(by[y].n/maxN)*(H-pad.t-pad.b);
+    const yy=H-pad.b-h;
+    const active=yearFilter==='All'||yearFilter===y;
+    ctx.fillStyle=active?'#e8b923': '#e8b92355';
+    ctx.fillRect(x,yy,w,h);
+    // dollar tick line
+    const dh=(by[y].dollars/maxD)*(H-pad.t-pad.b)*0.92;
+    ctx.strokeStyle=active?'#38bdf8':'#38bdf866';
+    ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(x, H-pad.b-dh); ctx.lineTo(x+w, H-pad.b-dh); ctx.stroke();
+    ctx.fillStyle='#a3a3a3'; ctx.font='11px Inter'; ctx.textAlign='center';
+    ctx.fillText(String(y), x+w/2, H-pad.b+16);
+    ctx.fillStyle='#f5f5f5'; ctx.font='700 11px Oswald';
+    ctx.fillText(String(by[y].n), x+w/2, yy-4);
+    hit.push({y,x0:x,x1:x+w});
+  });
+  canvas.onclick=e=>{
+    const r=canvas.getBoundingClientRect();
+    const x=e.clientX-r.left;
+    const h=hit.find(z=>x>=z.x0&&x<=z.x1);
+    if(!h) return;
+    yearFilter = (yearFilter===h.y)?'All':h.y;
+    buildYearPills(); render(); drawChart();
+  };
+  // redraw on resize
+  if(!canvas._ro){
+    canvas._ro=new ResizeObserver(()=>drawChart());
+    canvas._ro.observe(canvas.parentElement);
+  }
+}
+
+function render(){
+  const list=filtered();
+  renderCards(list);
+  renderMap(list);
+  renderTable(list);
+  drawChart();
+  if(selectedId && markers[selectedId]){ /* keep */ }
+}
+
+if(sessionStorage.bvapw){document.getElementById('pw').value=sessionStorage.bvapw;go({preventDefault(){}});}
+</script>
+</body>
+</html>
